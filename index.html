@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>签名格式转换器</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <h1>签名格式转换器</h1>
+      </header>
+
+      <section class="workspace" aria-label="签名编辑器">
+        <div class="canvas-area">
+          <div class="mode-switch" role="tablist" aria-label="签名输入方式">
+            <button class="mode-button active" type="button" data-mode="type" role="tab" aria-selected="true">
+              打字
+            </button>
+            <button class="mode-button" type="button" data-mode="draw" role="tab" aria-selected="false">
+              手写
+            </button>
+          </div>
+
+          <div class="type-panel" id="typePanel">
+            <label for="signatureText">签名文字</label>
+            <input id="signatureText" type="text" autocomplete="off" value="张三" />
+          </div>
+
+          <div class="signature-frame" id="signatureFrame">
+            <canvas id="signatureCanvas"></canvas>
+          </div>
+        </div>
+
+        <aside class="settings-panel" aria-label="导出设置">
+          <div class="panel-section">
+            <h2>画布</h2>
+            <div class="field-grid two">
+              <label>
+                宽度
+                <input id="exportWidth" type="number" min="64" max="4096" step="1" value="1200" />
+              </label>
+              <label>
+                高度
+                <input id="exportHeight" type="number" min="64" max="4096" step="1" value="600" />
+              </label>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h2>颜色</h2>
+            <div class="color-row">
+              <label for="penColor">笔色</label>
+              <input id="penColor" type="color" value="#111827" />
+            </div>
+            <div class="color-row">
+              <label for="backgroundColor">背景</label>
+              <input id="backgroundColor" type="color" value="#ffffff" />
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h2>画笔</h2>
+            <label class="range-field">
+              <span>笔宽</span>
+              <input id="penWidth" type="range" min="1" max="36" value="6" />
+              <output id="penWidthValue">6</output>
+            </label>
+          </div>
+
+          <div class="panel-section">
+            <h2>导出</h2>
+            <label>
+              格式
+              <select id="exportFormat">
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="svg">SVG</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="action-row">
+            <button class="button secondary" id="clearButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h14" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 7l1-2h4l1 2" />
+                <path d="M7 7l1 13h8l1-13" />
+              </svg>
+              清空
+            </button>
+            <button class="button primary" id="downloadButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 4v10" />
+                <path d="m7 10 5 5 5-5" />
+                <path d="M5 20h14" />
+              </svg>
+              下载
+            </button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
