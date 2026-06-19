@@ -99,7 +99,7 @@ select {
 
 .canvas-area {
   display: grid;
-  grid-template-rows: auto auto auto minmax(320px, 1fr);
+  grid-template-rows: auto auto auto auto;
   min-height: calc(100vh - 114px);
   padding: 18px;
 }
@@ -200,8 +200,11 @@ select:focus {
 
 .signature-frame {
   position: relative;
-  min-height: 320px;
-  height: 100%;
+  align-self: start;
+  width: 100%;
+  height: auto;
+  aspect-ratio: var(--signature-aspect-ratio, 2 / 1);
+  min-height: 0;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   overflow: hidden;
@@ -354,7 +357,7 @@ output {
   }
 
   .signature-frame {
-    height: clamp(320px, 52svh, 460px);
+    height: auto;
     min-height: 0;
   }
 

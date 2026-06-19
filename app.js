@@ -21,10 +21,15 @@ const DEFAULT_TOOL_WIDTHS = {
   write: 6,
   erase: 25,
 };
+const DEFAULT_EXPORT_SIZE = {
+  width: 1200,
+  height: 600,
+};
 
 const state = {
   mode: "type",
   tool: "write",
+  exportSizeAuto: true,
   toolWidths: { ...DEFAULT_TOOL_WIDTHS },
   strokes: [],
   activeStroke: null,
@@ -41,6 +46,10 @@ function clampNumber(value, min, max, fallback) {
   const number = Number.parseInt(value, 10);
   if (!Number.isFinite(number)) return fallback;
   return Math.min(max, Math.max(min, number));
+}
+
+function roundToStep(value, step) {
+  return Math.max(step, Math.round(value / step) * step);
 }
 
 function resizeCanvas() {
@@ -72,9 +81,46 @@ function getCanvasLogicalSize() {
 
 function getExportSize() {
   return {
-    width: clampNumber(exportWidth.value, 64, 4096, 1200),
-    height: clampNumber(exportHeight.value, 64, 4096, 600),
+    width: clampNumber(exportWidth.value, 64, 4096, DEFAULT_EXPORT_SIZE.width),
+    height: clampNumber(exportHeight.value, 64, 4096, DEFAULT_EXPORT_SIZE.height),
   };
+}
+
+function getResponsiveInitialExportSize() {
+  const frameWidth = frame.getBoundingClientRect().width || frame.parentElement?.clientWidth || window.innerWidth;
+  const frameTop = frame.getBoundingClientRect().top || 0;
+  const pagePadding = window.matchMedia("(max-width: 860px)").matches ? 14 : 24;
+  const availableHeight = Math.max(260, window.innerHeight - frameTop - pagePadding);
+  const naturalAspect = frameWidth / availableHeight;
+  const aspect = Math.min(2.4, Math.max(0.75, naturalAspect || DEFAULT_EXPORT_SIZE.width / DEFAULT_EXPORT_SIZE.height));
+  const longEdge = DEFAULT_EXPORT_SIZE.width;
+
+  if (aspect >= 1) {
+    return {
+      width: longEdge,
+      height: roundToStep(longEdge / aspect, 10),
+    };
+  }
+
+  return {
+    width: roundToStep(longEdge * aspect, 10),
+    height: longEdge,
+  };
+}
+
+function applyResponsiveInitialExportSize() {
+  if (!state.exportSizeAuto) return;
+
+  const { width, height } = getResponsiveInitialExportSize();
+  exportWidth.value = width;
+  exportHeight.value = height;
+  syncFrameAspectRatio();
+}
+
+function syncFrameAspectRatio() {
+  const { width, height } = getExportSize();
+  frame.style.setProperty("--signature-aspect-ratio", `${width} / ${height}`);
+  resizeCanvas();
 }
 
 function clearCanvas(targetCtx, width, height, fill) {
@@ -114,6 +160,12 @@ function drawSmoothStroke(targetCtx, points, width, height, color, lineWidth, co
   targetCtx.restore();
 }
 
+function getTargetPixelRatio(targetCtx) {
+  const transform = targetCtx.getTransform?.();
+  if (!transform) return 1;
+  return Math.max(1, Math.abs(transform.a) || 1, Math.abs(transform.d) || 1);
+}
+
 function drawTypedSignature(targetCtx, width, height) {
   const text = signatureText.value.trim();
   if (!text) return;
@@ -134,18 +186,20 @@ function drawStrokes(targetCtx, width, height) {
   const displayWidth = lastCanvasWidth || canvas.getBoundingClientRect().width || width;
   const displayHeight = lastCanvasHeight || canvas.getBoundingClientRect().height || height;
   const scale = Math.min(width, height) / Math.min(displayWidth, displayHeight);
+  const pixelRatio = getTargetPixelRatio(targetCtx);
   const layer = document.createElement("canvas");
-  layer.width = Math.max(1, Math.ceil(width));
-  layer.height = Math.max(1, Math.ceil(height));
+  layer.width = Math.max(1, Math.round(width * pixelRatio));
+  layer.height = Math.max(1, Math.round(height * pixelRatio));
   const layerCtx = layer.getContext("2d");
+  layerCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
   const drawStroke = (stroke) => {
     const isErase = stroke.tool === "erase";
     drawSmoothStroke(
       layerCtx,
       stroke.points,
-      layer.width,
-      layer.height,
+      width,
+      height,
       isErase ? "#000000" : stroke.color,
       stroke.width * scale,
       isErase ? "destination-out" : "source-over",
@@ -158,7 +212,7 @@ function drawStrokes(targetCtx, width, height) {
     drawStroke(state.activeStroke);
   }
 
-  targetCtx.drawImage(layer, 0, 0, width, height);
+  targetCtx.drawImage(layer, 0, 0, layer.width, layer.height, 0, 0, width, height);
 }
 
 function renderToContext(targetCtx, width, height) {
@@ -473,6 +527,20 @@ frame.addEventListener("gesturechange", blockSignatureBrowserGestures);
   input.addEventListener("input", render);
 });
 
+[exportWidth, exportHeight].forEach((input) => {
+  input.addEventListener("input", (event) => {
+    if (event.isTrusted) state.exportSizeAuto = false;
+    syncFrameAspectRatio();
+  });
+  input.addEventListener("change", (event) => {
+    if (event.isTrusted) state.exportSizeAuto = false;
+    const { width, height } = getExportSize();
+    exportWidth.value = width;
+    exportHeight.value = height;
+    syncFrameAspectRatio();
+  });
+});
+
 penWidth.addEventListener("input", () => {
   state.toolWidths[state.tool] = Number(penWidth.value);
   penWidthValue.value = penWidth.value;
@@ -480,7 +548,14 @@ penWidth.addEventListener("input", () => {
 
 clearButton.addEventListener("click", clearCurrent);
 downloadButton.addEventListener("click", downloadSignature);
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener("resize", () => {
+  if (state.exportSizeAuto) {
+    applyResponsiveInitialExportSize();
+    return;
+  }
+
+  resizeCanvas();
+});
 
 if ("ResizeObserver" in window) {
   new ResizeObserver(resizeCanvas).observe(frame);
@@ -492,4 +567,5 @@ if (document.fonts?.ready) {
 
 setDrawTool("write");
 setMode("type");
+applyResponsiveInitialExportSize();
 resizeCanvas();
