@@ -17,6 +17,7 @@ https://bug-jump.github.io/signature-converter/
 - 自定义导出宽度和高度
 - 打字生成签名
 - 鼠标或触屏手写签名，支持书写和擦除
+- 书写默认粗细为 6，擦除默认粗细为 25
 - 调整笔宽、笔色和背景颜色
 - 导出 PNG、JPEG、SVG
 

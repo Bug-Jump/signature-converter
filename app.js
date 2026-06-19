@@ -17,9 +17,15 @@ const exportFormat = document.getElementById("exportFormat");
 const clearButton = document.getElementById("clearButton");
 const downloadButton = document.getElementById("downloadButton");
 
+const DEFAULT_TOOL_WIDTHS = {
+  write: 6,
+  erase: 25,
+};
+
 const state = {
   mode: "type",
   tool: "write",
+  toolWidths: { ...DEFAULT_TOOL_WIDTHS },
   strokes: [],
   activeStroke: null,
   clearSerial: 0,
@@ -187,12 +193,14 @@ function setMode(mode) {
 }
 
 function setDrawTool(tool) {
+  state.toolWidths[state.tool] = Number(penWidth.value);
   state.tool = tool;
   toolButtons.forEach((button) => {
     const active = button.dataset.tool === tool;
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", String(active));
   });
+  syncPenWidthControl();
   updateCanvasCursor();
 }
 
@@ -203,6 +211,12 @@ function updateCanvasCursor() {
   }
 
   canvas.style.cursor = state.tool === "erase" ? "cell" : "crosshair";
+}
+
+function syncPenWidthControl() {
+  const width = state.toolWidths[state.tool] ?? DEFAULT_TOOL_WIDTHS[state.tool];
+  penWidth.value = String(width);
+  penWidthValue.value = String(width);
 }
 
 function pointerToPoint(event) {
@@ -222,7 +236,7 @@ function beginStroke(event) {
     pointerId: event.pointerId,
     serial: state.clearSerial,
     tool: state.tool,
-    width: Number(penWidth.value),
+    width: state.toolWidths[state.tool] ?? DEFAULT_TOOL_WIDTHS[state.tool],
     points: [pointerToPoint(event)],
   };
   render();
@@ -460,6 +474,7 @@ frame.addEventListener("gesturechange", blockSignatureBrowserGestures);
 });
 
 penWidth.addEventListener("input", () => {
+  state.toolWidths[state.tool] = Number(penWidth.value);
   penWidthValue.value = penWidth.value;
 });
 
