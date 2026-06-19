@@ -380,10 +380,6 @@ output {
   border-color: var(--border-strong);
 }
 
-.fullscreen-exit {
-  display: none;
-}
-
 .toggle-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -503,67 +499,6 @@ output {
   gap: 10px;
 }
 
-body.fullscreen-draw {
-  overflow: hidden;
-  background: var(--surface);
-}
-
-body.fullscreen-draw .app-shell {
-  min-height: 100dvh;
-  padding: 0;
-}
-
-body.fullscreen-draw .topbar,
-body.fullscreen-draw .settings-panel,
-body.fullscreen-draw .mode-switch,
-body.fullscreen-draw .type-panel {
-  display: none;
-}
-
-body.fullscreen-draw .workspace {
-  display: block;
-  width: 100vw;
-  max-width: none;
-  height: 100dvh;
-  margin: 0;
-}
-
-body.fullscreen-draw .canvas-area {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  width: 100vw;
-  min-height: 100dvh;
-  padding:
-    max(10px, env(safe-area-inset-top))
-    max(10px, env(safe-area-inset-right))
-    max(10px, env(safe-area-inset-bottom))
-    max(10px, env(safe-area-inset-left));
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-body.fullscreen-draw .canvas-controls {
-  padding: 0 0 10px;
-}
-
-body.fullscreen-draw .fullscreen-button {
-  display: none;
-}
-
-body.fullscreen-draw .fullscreen-exit {
-  display: inline-flex;
-}
-
-body.fullscreen-draw .signature-frame {
-  align-self: stretch;
-  height: 100%;
-  aspect-ratio: auto;
-}
-
 @media (max-width: 860px) {
   .app-shell {
     padding: 14px;
@@ -603,9 +538,7 @@ body.fullscreen-draw .signature-frame {
     align-items: stretch;
   }
 
-  .draw-actions,
-  .fullscreen-button,
-  .fullscreen-exit {
+  .draw-actions {
     flex: 1 1 auto;
   }
 

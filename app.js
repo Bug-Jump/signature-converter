@@ -1,6 +1,5 @@
 const canvas = document.getElementById("signatureCanvas");
 const frame = document.getElementById("signatureFrame");
-const canvasArea = document.querySelector(".canvas-area");
 const ctx = canvas.getContext("2d");
 
 const modeButtons = [...document.querySelectorAll(".mode-button")];
@@ -22,8 +21,6 @@ const transparentPngRow = document.getElementById("transparentPngRow");
 const clearButton = document.getElementById("clearButton");
 const undoButton = document.getElementById("undoButton");
 const redoButton = document.getElementById("redoButton");
-const fullscreenButton = document.getElementById("fullscreenButton");
-const exitFullscreenButton = document.getElementById("exitFullscreenButton");
 const downloadButton = document.getElementById("downloadButton");
 const previewModal = document.getElementById("previewModal");
 const previewImage = document.getElementById("previewImage");
@@ -54,7 +51,6 @@ const state = {
   redoStrokes: [],
   activeStroke: null,
   clearSerial: 0,
-  fullscreenDraw: false,
 };
 
 let lastCanvasWidth = 0;
@@ -267,9 +263,6 @@ function setMode(mode) {
   typePanel.classList.toggle("hidden", mode !== "type");
   drawToolSwitch.classList.toggle("hidden", mode !== "draw");
   drawActions.classList.toggle("hidden", mode !== "draw");
-  if (mode !== "draw" && state.fullscreenDraw) {
-    exitFullscreenDraw();
-  }
   updateCanvasCursor();
 
   modeButtons.forEach((button) => {
@@ -438,34 +431,6 @@ function selectDefaultSignatureText() {
   requestAnimationFrame(() => {
     signatureText.select();
   });
-}
-
-function resizeAfterLayoutChange() {
-  requestAnimationFrame(() => {
-    resizeCanvas();
-    requestAnimationFrame(resizeCanvas);
-  });
-}
-
-function enterFullscreenDraw() {
-  setMode("draw");
-  state.fullscreenDraw = true;
-  document.body.classList.add("fullscreen-draw");
-  resizeAfterLayoutChange();
-
-  if (canvasArea.requestFullscreen && !document.fullscreenElement) {
-    canvasArea.requestFullscreen().catch(() => {});
-  }
-}
-
-function exitFullscreenDraw(options = {}) {
-  state.fullscreenDraw = false;
-  document.body.classList.remove("fullscreen-draw");
-  resizeAfterLayoutChange();
-
-  if (!options.skipNativeExit && document.fullscreenElement && document.exitFullscreen) {
-    document.exitFullscreen().catch(() => {});
-  }
 }
 
 function getExportOptions() {
@@ -818,12 +783,6 @@ function handleGlobalKeydown(event) {
     return;
   }
 
-  if (event.key === "Escape" && state.fullscreenDraw) {
-    event.preventDefault();
-    exitFullscreenDraw();
-    return;
-  }
-
   if (isTextEntryTarget(event.target) || !(event.metaKey || event.ctrlKey)) return;
 
   const key = event.key.toLowerCase();
@@ -889,8 +848,6 @@ penWidth.addEventListener("input", () => {
 clearButton.addEventListener("click", clearCurrent);
 undoButton.addEventListener("click", undoStroke);
 redoButton.addEventListener("click", redoStroke);
-fullscreenButton.addEventListener("click", enterFullscreenDraw);
-exitFullscreenButton.addEventListener("click", exitFullscreenDraw);
 downloadButton.addEventListener("click", downloadSignature);
 exportFormat.addEventListener("change", syncExportOptionAvailability);
 previewCloseButton.addEventListener("click", closeExportPreview);
@@ -902,11 +859,6 @@ previewModal.addEventListener("click", (event) => {
   }
 });
 document.addEventListener("keydown", handleGlobalKeydown);
-document.addEventListener("fullscreenchange", () => {
-  if (state.fullscreenDraw && !document.fullscreenElement) {
-    exitFullscreenDraw({ skipNativeExit: true });
-  }
-});
 window.addEventListener("resize", () => {
   if (state.exportSizeAuto) {
     applyResponsiveInitialExportSize();
@@ -914,10 +866,6 @@ window.addEventListener("resize", () => {
   }
 
   resizeCanvas();
-});
-window.addEventListener("orientationchange", resizeAfterLayoutChange);
-window.visualViewport?.addEventListener("resize", () => {
-  if (state.fullscreenDraw) resizeAfterLayoutChange();
 });
 
 if ("ResizeObserver" in window) {
