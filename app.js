@@ -22,14 +22,14 @@ const DEFAULT_TOOL_WIDTHS = {
   erase: 25,
 };
 const DEFAULT_EXPORT_SIZE = {
-  width: 1200,
-  height: 600,
+  width: 1600,
+  height: 900,
 };
 
 const state = {
   mode: "type",
   tool: "write",
-  exportSizeAuto: true,
+  exportSizeAuto: false,
   toolWidths: { ...DEFAULT_TOOL_WIDTHS },
   strokes: [],
   activeStroke: null,
@@ -367,6 +367,14 @@ function clearCurrent() {
   }
 }
 
+function selectDefaultSignatureText() {
+  if (signatureText.value !== "张三") return;
+
+  requestAnimationFrame(() => {
+    signatureText.select();
+  });
+}
+
 function createExportCanvas() {
   const { width, height } = getExportSize();
   exportWidth.value = width;
@@ -527,6 +535,9 @@ frame.addEventListener("gesturechange", blockSignatureBrowserGestures);
   input.addEventListener("input", render);
 });
 
+signatureText.addEventListener("focus", selectDefaultSignatureText);
+signatureText.addEventListener("click", selectDefaultSignatureText);
+
 [exportWidth, exportHeight].forEach((input) => {
   input.addEventListener("input", (event) => {
     if (event.isTrusted) state.exportSizeAuto = false;
@@ -567,5 +578,5 @@ if (document.fonts?.ready) {
 
 setDrawTool("write");
 setMode("type");
-applyResponsiveInitialExportSize();
+syncFrameAspectRatio();
 resizeCanvas();
