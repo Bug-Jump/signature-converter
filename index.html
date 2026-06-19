@@ -41,6 +41,33 @@
               </button>
             </div>
 
+            <div class="draw-actions hidden" id="drawActions" aria-label="手写操作">
+              <button class="icon-button" id="undoButton" type="button" title="撤销" aria-label="撤销" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 14 4 9l5-5" />
+                  <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
+                </svg>
+              </button>
+              <button class="icon-button" id="redoButton" type="button" title="重做" aria-label="重做" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m15 14 5-5-5-5" />
+                  <path d="M20 9H10a6 6 0 0 0 0 12h3" />
+                </svg>
+              </button>
+              <button class="button secondary fullscreen-button" id="fullscreenButton" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 3H3v5" />
+                  <path d="M16 3h5v5" />
+                  <path d="M21 16v5h-5" />
+                  <path d="M3 16v5h5" />
+                </svg>
+                全屏手写
+              </button>
+              <button class="button primary fullscreen-exit" id="exitFullscreenButton" type="button">
+                完成
+              </button>
+            </div>
+
             <button class="button secondary clear-button" id="clearButton" type="button">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M5 7h14" />
@@ -104,6 +131,20 @@
                 <option value="svg">SVG</option>
               </select>
             </label>
+            <label class="toggle-row">
+              <span>
+                <strong>自动裁切空白边缘</strong>
+                <small>导出时移除签名周围多余空白</small>
+              </span>
+              <input id="autoCrop" type="checkbox" checked />
+            </label>
+            <label class="toggle-row" id="transparentPngRow">
+              <span>
+                <strong>透明背景 PNG</strong>
+                <small>仅 PNG 导出时生效</small>
+              </span>
+              <input id="transparentPng" type="checkbox" />
+            </label>
           </div>
 
           <div class="action-row">
@@ -119,6 +160,28 @@
         </aside>
       </section>
     </main>
+
+    <div class="preview-modal hidden" id="previewModal" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+      <div class="preview-card">
+        <div class="preview-header">
+          <h2 id="previewTitle">导出预览</h2>
+          <button class="icon-button" id="previewCloseButton" type="button" title="关闭" aria-label="关闭预览">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+        <p class="preview-meta" id="previewMeta"></p>
+        <div class="preview-stage" id="previewStage">
+          <img id="previewImage" alt="导出前预览" />
+        </div>
+        <div class="preview-actions">
+          <button class="button secondary" id="previewCancelButton" type="button">取消</button>
+          <button class="button primary" id="previewDownloadButton" type="button">确认下载</button>
+        </div>
+      </div>
+    </div>
 
     <script src="./app.js"></script>
   </body>
