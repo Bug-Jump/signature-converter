@@ -99,12 +99,13 @@ select {
 
 .canvas-area {
   display: grid;
-  grid-template-rows: auto auto minmax(320px, 1fr);
+  grid-template-rows: auto auto auto minmax(320px, 1fr);
   min-height: calc(100vh - 114px);
   padding: 18px;
 }
 
-.mode-switch {
+.mode-switch,
+.tool-switch {
   display: inline-grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
@@ -115,7 +116,8 @@ select {
   background: var(--surface-soft);
 }
 
-.mode-button {
+.mode-button,
+.tool-button {
   min-height: 34px;
   border: 0;
   border-radius: 6px;
@@ -126,7 +128,8 @@ select {
   font-weight: 650;
 }
 
-.mode-button.active {
+.mode-button.active,
+.tool-button.active {
   background: var(--surface);
   color: var(--text);
   box-shadow: 0 1px 5px rgba(15, 23, 42, 0.12);
@@ -137,11 +140,33 @@ select {
   grid-template-columns: auto minmax(180px, 420px);
   align-items: center;
   gap: 12px;
-  padding: 16px 0;
+  padding: 16px 0 8px;
 }
 
 .type-panel.hidden {
   display: none;
+}
+
+.canvas-controls {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 420px);
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 16px;
+}
+
+.tool-switch {
+  grid-column: 1;
+}
+
+.tool-switch.hidden {
+  display: none;
+}
+
+.clear-button {
+  grid-column: 2;
+  justify-self: start;
+  min-width: 132px;
 }
 
 label {
@@ -263,7 +288,7 @@ output {
 
 .action-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
@@ -324,7 +349,7 @@ output {
 
   .canvas-area {
     min-height: auto;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     padding: 14px;
   }
 
@@ -333,13 +358,20 @@ output {
     min-height: 0;
   }
 
-  .mode-switch {
+  .mode-switch,
+  .tool-switch {
     width: 100%;
   }
 
-  .type-panel {
+  .type-panel,
+  .canvas-controls {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .clear-button {
+    grid-column: auto;
+    justify-self: stretch;
   }
 
   .settings-panel {

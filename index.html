@@ -31,6 +31,28 @@
             <input id="signatureText" type="text" autocomplete="off" value="张三" />
           </div>
 
+          <div class="canvas-controls">
+            <div class="tool-switch hidden" id="drawToolSwitch" aria-label="手写工具">
+              <button class="tool-button active" type="button" data-tool="write" aria-pressed="true">
+                书写
+              </button>
+              <button class="tool-button" type="button" data-tool="erase" aria-pressed="false">
+                擦除
+              </button>
+            </div>
+
+            <button class="button secondary clear-button" id="clearButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h14" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 7l1-2h4l1 2" />
+                <path d="M7 7l1 13h8l1-13" />
+              </svg>
+              清空
+            </button>
+          </div>
+
           <div class="signature-frame" id="signatureFrame">
             <canvas id="signatureCanvas"></canvas>
           </div>
@@ -66,7 +88,7 @@
           <div class="panel-section">
             <h2>画笔</h2>
             <label class="range-field">
-              <span>笔宽</span>
+              <span>粗细</span>
               <input id="penWidth" type="range" min="1" max="36" value="6" />
               <output id="penWidthValue">6</output>
             </label>
@@ -85,16 +107,6 @@
           </div>
 
           <div class="action-row">
-            <button class="button secondary" id="clearButton" type="button">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 7h14" />
-                <path d="M10 11v6" />
-                <path d="M14 11v6" />
-                <path d="M9 7l1-2h4l1 2" />
-                <path d="M7 7l1 13h8l1-13" />
-              </svg>
-              清空
-            </button>
             <button class="button primary" id="downloadButton" type="button">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 4v10" />

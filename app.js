@@ -3,7 +3,9 @@ const frame = document.getElementById("signatureFrame");
 const ctx = canvas.getContext("2d");
 
 const modeButtons = [...document.querySelectorAll(".mode-button")];
+const toolButtons = [...document.querySelectorAll(".tool-button")];
 const typePanel = document.getElementById("typePanel");
+const drawToolSwitch = document.getElementById("drawToolSwitch");
 const signatureText = document.getElementById("signatureText");
 const exportWidth = document.getElementById("exportWidth");
 const exportHeight = document.getElementById("exportHeight");
@@ -17,6 +19,7 @@ const downloadButton = document.getElementById("downloadButton");
 
 const state = {
   mode: "type",
+  tool: "write",
   strokes: [],
   activeStroke: null,
   clearSerial: 0,
@@ -74,10 +77,11 @@ function clearCanvas(targetCtx, width, height, fill) {
   targetCtx.fillRect(0, 0, width, height);
 }
 
-function drawSmoothStroke(targetCtx, points, width, height, color, lineWidth) {
+function drawSmoothStroke(targetCtx, points, width, height, color, lineWidth, compositeOperation = "source-over") {
   if (!points.length) return;
 
   targetCtx.save();
+  targetCtx.globalCompositeOperation = compositeOperation;
   targetCtx.strokeStyle = color;
   targetCtx.lineWidth = Math.max(1, lineWidth);
   targetCtx.lineCap = "round";
@@ -124,21 +128,31 @@ function drawStrokes(targetCtx, width, height) {
   const displayWidth = lastCanvasWidth || canvas.getBoundingClientRect().width || width;
   const displayHeight = lastCanvasHeight || canvas.getBoundingClientRect().height || height;
   const scale = Math.min(width, height) / Math.min(displayWidth, displayHeight);
+  const layer = document.createElement("canvas");
+  layer.width = Math.max(1, Math.ceil(width));
+  layer.height = Math.max(1, Math.ceil(height));
+  const layerCtx = layer.getContext("2d");
 
-  state.strokes.forEach((stroke) => {
-    drawSmoothStroke(targetCtx, stroke.points, width, height, stroke.color, stroke.width * scale);
-  });
+  const drawStroke = (stroke) => {
+    const isErase = stroke.tool === "erase";
+    drawSmoothStroke(
+      layerCtx,
+      stroke.points,
+      layer.width,
+      layer.height,
+      isErase ? "#000000" : stroke.color,
+      stroke.width * scale,
+      isErase ? "destination-out" : "source-over",
+    );
+  };
+
+  state.strokes.forEach(drawStroke);
 
   if (state.activeStroke) {
-    drawSmoothStroke(
-      targetCtx,
-      state.activeStroke.points,
-      width,
-      height,
-      state.activeStroke.color,
-      state.activeStroke.width * scale,
-    );
+    drawStroke(state.activeStroke);
   }
+
+  targetCtx.drawImage(layer, 0, 0, width, height);
 }
 
 function renderToContext(targetCtx, width, height) {
@@ -160,7 +174,8 @@ function render() {
 function setMode(mode) {
   state.mode = mode;
   typePanel.classList.toggle("hidden", mode !== "type");
-  canvas.style.cursor = mode === "draw" ? "crosshair" : "default";
+  drawToolSwitch.classList.toggle("hidden", mode !== "draw");
+  updateCanvasCursor();
 
   modeButtons.forEach((button) => {
     const active = button.dataset.mode === mode;
@@ -169,6 +184,25 @@ function setMode(mode) {
   });
 
   render();
+}
+
+function setDrawTool(tool) {
+  state.tool = tool;
+  toolButtons.forEach((button) => {
+    const active = button.dataset.tool === tool;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  updateCanvasCursor();
+}
+
+function updateCanvasCursor() {
+  if (state.mode !== "draw") {
+    canvas.style.cursor = "default";
+    return;
+  }
+
+  canvas.style.cursor = state.tool === "erase" ? "cell" : "crosshair";
 }
 
 function pointerToPoint(event) {
@@ -187,6 +221,7 @@ function beginStroke(event) {
     color: penColor.value,
     pointerId: event.pointerId,
     serial: state.clearSerial,
+    tool: state.tool,
     width: Number(penWidth.value),
     points: [pointerToPoint(event)],
   };
@@ -323,13 +358,42 @@ function createSvg() {
       );
     }
   } else {
-    const displayMin = Math.min(lastCanvasWidth || width, lastCanvasHeight || height);
+    const displayMin = Math.min(lastCanvasWidth || width, lastCanvasHeight || height) || Math.min(width, height);
     const scale = Math.min(width, height) / displayMin;
-    state.strokes.forEach((stroke) => {
-      const d = pointsToSvgPath(stroke.points, width, height);
-      if (!d) return;
+    const operations = state.strokes
+      .map((stroke, index) => ({
+        d: pointsToSvgPath(stroke.points, width, height),
+        index,
+        stroke,
+        width: (stroke.width * scale).toFixed(2),
+      }))
+      .filter((operation) => operation.d);
+
+    let maskIndex = 0;
+
+    operations.forEach((operation) => {
+      if (operation.stroke.tool === "erase") return;
+
+      const laterErasers = operations.filter(
+        (candidate) => candidate.index > operation.index && candidate.stroke.tool === "erase",
+      );
+      const maskId = laterErasers.length ? `erase-mask-${maskIndex}` : "";
+      maskIndex += 1;
+
+      if (laterErasers.length) {
+        parts.push(
+          `<mask id="${maskId}" maskUnits="userSpaceOnUse">`,
+          `<rect width="100%" height="100%" fill="white"/>`,
+          ...laterErasers.map(
+            (eraser) =>
+              `<path d="${eraser.d}" fill="none" stroke="black" stroke-width="${eraser.width}" stroke-linecap="round" stroke-linejoin="round"/>`,
+          ),
+          `</mask>`,
+        );
+      }
+
       parts.push(
-        `<path d="${d}" fill="none" stroke="${stroke.color}" stroke-width="${(stroke.width * scale).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"/>`,
+        `<path d="${operation.d}" fill="none" stroke="${operation.stroke.color || penColor.value}" stroke-width="${operation.width}" stroke-linecap="round" stroke-linejoin="round"${maskId ? ` mask="url(#${maskId})"` : ""}/>`,
       );
     });
   }
@@ -375,6 +439,10 @@ modeButtons.forEach((button) => {
   button.addEventListener("click", () => setMode(button.dataset.mode));
 });
 
+toolButtons.forEach((button) => {
+  button.addEventListener("click", () => setDrawTool(button.dataset.tool));
+});
+
 canvas.addEventListener("pointerdown", beginStroke);
 canvas.addEventListener("pointermove", moveStroke);
 canvas.addEventListener("pointerup", endStroke);
@@ -407,5 +475,6 @@ if (document.fonts?.ready) {
   document.fonts.ready.then(render);
 }
 
+setDrawTool("write");
 setMode("type");
 resizeCanvas();
